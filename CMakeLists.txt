@@ -3,7 +3,7 @@ project(duplo)
 file(GLOB SOURCES src/*.cpp)
 
 SET(DUPLO_VERSION "\"v1.0.1\"" CACHE STRING "Duplo version")
-
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 if(MSVC)
 else()
     add_compile_options(-O3 -Wall -Werror -std=c++17)
