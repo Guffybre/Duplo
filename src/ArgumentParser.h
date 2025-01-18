@@ -15,7 +15,7 @@ public:
     const char* getStr(const char* s, const char* defaultValue = "");
     int getInt(const char* s, int defaultValue);
     float getFloat(const char* s, float defaultValue);
-    const std::vector<std::string> getVectStr(const char* s, std::vector<std::string> defaultValue = std::vector<std::string>());
+    std::vector<std::string> getVectStr(const char* s, std::vector<std::string> defaultValue = std::vector<std::string>()) const;
 };
 
 #endif
