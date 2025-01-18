@@ -8,6 +8,8 @@ Options::Options(
     unsigned filesToCheck,
     bool outputXml,
     bool ignoreSameFilename,
+    bool recursiveSearch,
+    const std::vector<std::string>& filteredExtensions,
     const std::string& listFilename,
     const std::string& outputFilename)
     : m_minChars(minChars)
@@ -17,6 +19,8 @@ Options::Options(
     , m_filesToCheck(filesToCheck)
     , m_outputXml(outputXml)
     , m_ignoreSameFilename(ignoreSameFilename)
+    , m_recursiveSearch(recursiveSearch)
+    , m_filteredExtensions(filteredExtensions)
     , m_listFilename(listFilename)
     , m_outputFilename(outputFilename)
 {
@@ -44,6 +48,14 @@ bool Options::GetOutputXml() const {
 
 bool Options::GetIgnoreSameFilename() const {
     return m_ignoreSameFilename;
+}
+
+bool Options::GetRecursiveSearch() const {
+    return m_recursiveSearch;
+}
+
+const std::vector<std::string>& Options::GetFilteredExtensions() const {
+    return m_filteredExtensions;
 }
 
 const std::string& Options::GetListFilename() const {

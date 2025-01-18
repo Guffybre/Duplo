@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <sstream>
 
 ArgumentParser::ArgumentParser(int m_argc, const char* m_argv[]) {
     argc = m_argc;
@@ -15,6 +16,23 @@ bool ArgumentParser::is(const char* s) {
         }
     }
     return false;
+}
+
+const std::vector<std::string> ArgumentParser::getVectStr(const char* s, std::vector<std::string> defaultValue) {
+    std::vector<std::string> arguments;
+    for (int i = 0; i < argc; i++) {
+        if (strcmp(argv[i], s) == 0 && argc > i + 1) {
+            std::string buffer = argv[i + 1];
+            std::istringstream ss(buffer);
+            std::string token;
+            while (std::getline(ss, token, ',')) {
+                arguments.push_back(token);
+            }
+            return arguments;
+        }
+    }
+
+    return defaultValue;
 }
 
 const char* ArgumentParser::getStr(const char* s, const char* defaultValue) {

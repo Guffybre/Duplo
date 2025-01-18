@@ -1,6 +1,4 @@
 #include "Duplo.h"
-#include "ArgumentParser.h"
-#include "HashUtil.h"
 #include "Options.h"
 #include "SourceFile.h"
 #include "SourceLine.h"
@@ -12,10 +10,15 @@
 #include <cstring>
 #include <ctime>
 #include <fstream>
+#include <iterator>
 #include <sstream>
 #include <tuple>
 #include <unordered_map>
 #include <unordered_set>
+#include <filesystem>
+#include <stdexcept>
+
+namespace fs = std::filesystem;
 
 enum class MatchType : unsigned char {
     NONE,
@@ -58,26 +61,101 @@ ProcessResult operator<<(ProcessResult& left, const ProcessResult& right) {
 }
 
 namespace {
+    std::vector<std::string> findAllFiles(const std::string& repositoryPath) {
+        std::vector<std::string> files;
+
+        try {
+            fs::path rootPath(repositoryPath);
+
+            // Ensure the path exists and is a directory
+            if (!fs::exists(rootPath)) {
+                throw std::runtime_error("Path does not exist: " + repositoryPath);
+            }
+            if (!fs::is_directory(rootPath)) {
+                throw std::runtime_error("Path is not a directory: " + repositoryPath);
+            }
+
+            // Traverse the directory recursively
+            for (const auto& entry : fs::recursive_directory_iterator(rootPath, fs::directory_options::skip_permission_denied)) {
+                try {
+                    if (fs::is_regular_file(entry)) {
+                        files.push_back(entry.path().string());
+                    }
+                } catch (const std::exception& e) {
+                    // Handle any errors for individual files
+                    std::cerr << "Error accessing file: " << entry.path() << " - " << e.what() << std::endl;
+                }
+            }
+        } catch (const std::exception& e) {
+            std::cerr << "Error processing directory: " << repositoryPath << " - " << e.what() << std::endl;
+        }
+
+        return files;
+    }
+
+
+std::vector<std::string> FilterFilesByExtension(const std::vector<std::string>& filePaths, const std::vector<std::string>& allowedExtensions) {
+    
+    std::vector<std::string> filteredFiles;
+
+    for (const auto& filePath : filePaths) {
+        try {
+            fs::path path(filePath);
+
+            if (path.has_extension()) {
+                std::string extension = path.extension().string();
+                // Check if the extension is in the allowed list
+                if (std::find(allowedExtensions.begin(), allowedExtensions.end(), extension) != allowedExtensions.end()) {
+                    filteredFiles.push_back(filePath);
+                }
+            }
+        } catch (const fs::filesystem_error& e) {
+            std::cerr << "Error processing file path " << filePath << ": " << e.what() << '\n';
+        }
+    }
+
+    return filteredFiles;
+}
+
+    
+    std::vector<std::string> FindFilesInDirectories(const std::vector<std::string>& listFilename)
+    {
+        std::vector<std::string> filePathList;
+        for(const auto& filePath : listFilename)
+        {
+            if(fs::is_directory(filePath))   
+            {
+                auto directoryFiles = findAllFiles(filePath);
+                std::move(directoryFiles.begin(), directoryFiles.end(), std::back_inserter(filePathList));
+            }
+            else
+            {
+                filePathList.emplace_back(filePath);
+            }
+        }
+        return filePathList;
+    }
+
     bool IsSameFilename(const SourceFile& left, const SourceFile& right) {
         return StringUtil::GetFilenamePart(left.GetFilename()) == StringUtil::GetFilenamePart(right.GetFilename());
     }
 
     std::vector<std::string> LoadFileList(const std::string& listFilename) {
+        std::vector<std::string> lines;
         if (listFilename == "-") {
-            std::vector<std::string> lines;
             std::string line;
             while (std::getline(std::cin, line)) {
                 lines.push_back(line);
             }
 
-            return lines;
         } else {
             TextFile textFile(listFilename);
-            auto lines = textFile.ReadLines(true);
-            return lines;
+            lines = textFile.ReadLines(true);
+            
         }
+        return lines;
     }
-
+    
     std::tuple<std::vector<SourceFile>, std::vector<MatchType>, unsigned, unsigned> LoadSourceFiles(
         const std::vector<std::string>& lines,
         unsigned minChars,
@@ -359,6 +437,7 @@ namespace {
     }
 }
 
+
 void Duplo::Run(const Options& options) {
     std::ofstream outfile(
         options.GetOutputFilename().c_str(), std::ios::out | std::ios::binary);
@@ -382,6 +461,16 @@ void Duplo::Run(const Options& options) {
     }
 
     auto lines = LoadFileList(options.GetListFilename());
+    if(true == options.GetRecursiveSearch())
+    {
+        lines = FindFilesInDirectories(lines);
+    }
+    
+    if(false == options.GetFilteredExtensions().empty())
+    {
+        lines = FilterFilesByExtension(lines, options.GetFilteredExtensions());
+    }
+    
     auto [sourceFiles, matrix, files, locsTotal] =
         LoadSourceFiles(lines, options.GetMinChars(), options.GetIgnorePrepStuff());
     auto numFilesToCheck = options.GetFilesToCheck() > 0 ? std::min(options.GetFilesToCheck(), sourceFiles.size()): sourceFiles.size();

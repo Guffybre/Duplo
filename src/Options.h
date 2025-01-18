@@ -2,6 +2,7 @@
 #define _OPTIONS_H_
 
 #include <string>
+#include <vector>
 
 class Options {
     unsigned m_minChars;
@@ -11,9 +12,11 @@ class Options {
     unsigned m_filesToCheck;
     bool m_outputXml;
     bool m_ignoreSameFilename;
+    bool m_recursiveSearch;
+    std::vector<std::string> m_filteredExtensions;
     std::string m_listFilename;
     std::string m_outputFilename;
-
+    
 public:
     Options(
         unsigned minChars,
@@ -23,6 +26,8 @@ public:
         unsigned m_filesToCheck,
         bool outputXml,
         bool ignoreSameFilename,
+        bool recursiveSearch,
+        const std::vector<std::string>& filteredExtensions,
         const std::string& listFilename,
         const std::string& outputFilename
     );
@@ -30,6 +35,8 @@ public:
     bool GetIgnoreSameFilename() const;
     const std::string& GetListFilename() const;
     const std::string& GetOutputFilename() const;
+    const std::vector<std::string>& GetFilteredExtensions() const;
+    bool GetRecursiveSearch() const;
     bool GetOutputXml() const;
     unsigned GetMinChars() const;
     bool GetIgnorePrepStuff() const;

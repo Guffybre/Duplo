@@ -30,8 +30,11 @@ namespace {
             bool ignorePrepStuff = ap.is("-ip");
             bool outputXml = ap.is("-xml");
             bool ignoreSameFilename = ap.is("-d");
+            bool recursiveSearch = ap.is("-recursive");
+            std::vector<std::string> filteredExtensions = ap.getVectStr("-filter");
             std::string listFilename(argv[argc - 2]);
             std::string outputFilename(argv[argc - 1]);
+            
             Options options(
                 minChars,
                 ignorePrepStuff,
@@ -40,6 +43,8 @@ namespace {
                 numberOfFiles,
                 outputXml,
                 ignoreSameFilename,
+                recursiveSearch,
+                filteredExtensions,
                 listFilename,
                 outputFilename);
             Duplo::Run(options);
@@ -65,6 +70,7 @@ namespace {
             std::cout << "       -ip              ignore preprocessor directives\n";
             std::cout << "       -d               ignore file pairs with same name\n";
             std::cout << "       -xml             output file in XML\n";
+            std::cout << "       -filter          filter keeping only the given files extensions\n";
             std::cout << "       INPUT_FILELIST   input filelist (specify '-' to read from stdin)\n";
             std::cout << "       OUTPUT_FILE      output file\n";
 
